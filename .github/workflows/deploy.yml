@@ -1,0 +1,24 @@
+name: Deploy Serverless Microservices
+
+on:
+  push:
+    branches: [ "main" ]  # Runs on pushes to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ["auth-service", "chat-service", "user-service"]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      - run: npm install -g serverless
+      - run: cd ${{ matrix.service }} && npm install
+      - run: cd ${{ matrix.service }} && serverless deploy --stage prod
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
