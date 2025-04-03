@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.768.0",
+    "aws-sdk": "^2.1692.0",
+    "serverless-offline": "^14.4.0"
+  }
+}

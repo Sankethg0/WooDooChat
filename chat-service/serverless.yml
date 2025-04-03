@@ -1,0 +1,82 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: sankethg2000
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: realtime-chat-app
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: chat-service
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  environment:
+    CONNECTIONS_TABLE: ConnectionsTable
+    MESSAGES_TABLE: MessagesTable
+    WEBSOCKET_API_ENDPOINT: !Join
+      - ""
+      - - "https://"
+        - !Ref WebSocketApi
+        - '.execute-api.us-east-1.amazonaws.com/dev'
+
+resources:
+  Resources: 
+    ConnectionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ConnectionsTable
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    MessagesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: MessagesTable
+        AttributeDefinitions: 
+          - AttributeName: messageId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: messageId
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    WebSocketApi:
+      Type: AWS::ApiGatewayV2::Api
+      Properties:
+        Name: chat-websocket-api
+        ProtocolType: WEBSOCKET
+        RouteSelectionExpression: "$request.body.action" 
+
+functions:
+  connect:
+    handler: handler.connect
+    events:
+      - websocket:
+          route: $connect
+  disconnect:
+    handler: handler.disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  sendMessage:
+    handler: handler.sendMessage
+    events:
+      - websocket:
+          route: sendMessage
+  getMessages:
+    handler: handler.getMessages
+    events:
+      - http:
+          path: messages
+          method: get
+          cors: true

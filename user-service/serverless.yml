@@ -1,0 +1,52 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: sankethg2000
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: realtime-chat-app
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: user-service
+
+provider:
+  name: aws
+  runtime:  nodejs20.x
+  region: us-east-1
+  environment:
+    USERS_TABLE: !Ref UsersTable
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UsersTable
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+functions:
+  createUser:
+    handler: handler.createUser
+    events:
+      - http:
+          path: users
+          method: post
+          cors: true
+  getUser:
+    handler: handler.getUser
+    events:
+      - http:
+          path: users/{userId}
+          method: get
+          cors: true
+  updateUser:
+    handler: handler.updateUser
+    events:
+      - http:
+          path: users/{userId}
+          method: put
+          cors: true
